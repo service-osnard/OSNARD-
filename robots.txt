@@ -1,0 +1,3 @@
+User-agent: *
+Allow: /
+Sitemap: https://service-osnard.github.io/OSNARD-/sitemap.xml
