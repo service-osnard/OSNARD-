@@ -950,10 +950,10 @@
           </div>
         </div>
         <div class="contact-form">
-          <form id="contactForm" action="https://formsubmit.co/service.osnard@gmail.com" method="POST">
-            <input type="text" name="_honey" tabindex="-1" autocomplete="off" aria-hidden="true" style="position:absolute;left:-9999px;width:1px;height:1px;opacity:0;">
-            <input type="hidden" name="_subject" value="Nouveau message depuis le site OSNARD">
-            <input type="hidden" name="_url" value="https://service-osnard.github.io/OSNARD-/">
+          <form id="contactForm" action="https://api.web3forms.com/submit" method="POST">
+            <input type="hidden" name="access_key" value="6c302f19-67f0-4e38-979b-e42c93a034ff">
+            <input type="hidden" name="subject" value="Nouveau message depuis le site OSNARD">
+            <input type="checkbox" name="botcheck" class="hidden" style="display:none;">
             <div class="form-row">
               <div class="form-group">
                 <label for="name">Nom complet</label>
@@ -983,6 +983,7 @@
             </div>
             <button type="submit" class="btn btn-primary" style="width: 100%;">Envoyer le message</button>
           </form>
+          <p id="formStatus" role="status" aria-live="polite" style="margin-top:16px;text-align:center;display:none;"></p>
         </div>
       </div>
     </div>
@@ -1047,6 +1048,47 @@
     // Close mobile menu on link click
     navLinks.querySelectorAll('a').forEach(link => {
       link.addEventListener('click', () => navLinks.classList.remove('active'));
+    });
+
+    // Envoi du formulaire de contact via Web3Forms
+    const contactForm = document.getElementById('contactForm');
+    const formStatus = document.getElementById('formStatus');
+
+    contactForm.addEventListener('submit', async (event) => {
+      event.preventDefault();
+
+      const submitButton = contactForm.querySelector('button[type="submit"]');
+      const originalButtonText = submitButton.textContent;
+      submitButton.disabled = true;
+      submitButton.textContent = 'Envoi en cours...';
+      formStatus.style.display = 'block';
+      formStatus.style.color = '#475569';
+      formStatus.textContent = 'Votre message est en cours d’envoi…';
+
+      try {
+        const formData = new FormData(contactForm);
+        const response = await fetch(contactForm.action, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+          body: JSON.stringify(Object.fromEntries(formData.entries()))
+        });
+
+        const result = await response.json();
+
+        if (response.ok && result.success) {
+          formStatus.style.color = '#15803d';
+          formStatus.textContent = 'Merci ! Votre message a bien été envoyé à OSNARD.';
+          contactForm.reset();
+        } else {
+          throw new Error(result.message || 'Le service n’a pas accepté le message.');
+        }
+      } catch (error) {
+        formStatus.style.color = '#b91c1c';
+        formStatus.textContent = 'Échec de l’envoi. Vérifiez votre connexion puis réessayez. Si le problème persiste, contactez-nous par email : service.osnard@gmail.com.';
+      } finally {
+        submitButton.disabled = false;
+        submitButton.textContent = originalButtonText;
+      }
     });
   </script>
 </body>
