@@ -951,6 +951,9 @@
         </div>
         <div class="contact-form">
           <form id="contactForm" onsubmit="handleSubmit(event)">
+            <input type="text" name="_honey" tabindex="-1" autocomplete="off" aria-hidden="true" style="position:absolute;left:-9999px;width:1px;height:1px;opacity:0;">
+            <input type="hidden" name="_subject" value="Nouveau message depuis le site OSNARD">
+            <p id="formStatus" role="status" aria-live="polite" style="display:none;margin:0 0 16px;padding:12px 14px;border-radius:8px;"></p>
             <div class="form-row">
               <div class="form-group">
                 <label for="name">Nom complet</label>
@@ -1046,18 +1049,60 @@
       link.addEventListener('click', () => navLinks.classList.remove('active'));
     });
 
-    // Form handling
-    function handleSubmit(e) {
+    // Contact form: send messages to the OSNARD inbox through FormSubmit
+    async function handleSubmit(e) {
       e.preventDefault();
-      const btn = e.target.querySelector('button');
+      const form = e.target;
+      const btn = form.querySelector('button[type="submit"]');
+      const status = document.getElementById('formStatus');
       const original = btn.textContent;
-      btn.textContent = 'Message envoyé ✓';
-      btn.style.background = '#10B981';
-      setTimeout(() => {
+      const formData = new FormData(form);
+      const payload = Object.fromEntries(formData.entries());
+
+      status.style.display = 'block';
+      status.style.background = '#EEF6FF';
+      status.style.color = '#174A75';
+      status.textContent = 'Envoi de votre message en cours…';
+      btn.disabled = true;
+      btn.textContent = 'Envoi en cours…';
+      btn.style.opacity = '0.7';
+
+      try {
+        const response = await fetch('https://formsubmit.co/ajax/service.osnard@gmail.com', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Accept': 'application/json'
+          },
+          body: JSON.stringify(payload)
+        });
+
+        const result = await response.json();
+        if (!response.ok || result.success !== 'true' && result.success !== true) {
+          throw new Error(result.message || 'Le service n’a pas accepté le message.');
+        }
+
+        status.style.background = '#EAF8F0';
+        status.style.color = '#176B3A';
+        status.textContent = 'Merci ! Votre message a été transmis. Nous vous répondrons dès que possible.';
+        form.reset();
+        btn.textContent = 'Message envoyé ✓';
+        btn.style.background = '#10B981';
+      } catch (error) {
+        status.style.background = '#FDECEC';
+        status.style.color = '#9B1C1C';
+        status.textContent = 'Impossible d’envoyer le message pour le moment. Veuillez réessayer ou nous écrire à service.osnard@gmail.com.';
         btn.textContent = original;
-        btn.style.background = '';
-        e.target.reset();
-      }, 3000);
+      } finally {
+        btn.disabled = false;
+        btn.style.opacity = '';
+        if (btn.textContent === 'Message envoyé ✓') {
+          setTimeout(() => {
+            btn.textContent = original;
+            btn.style.background = '';
+          }, 3500);
+        }
+      }
     }
   </script>
 </body>
